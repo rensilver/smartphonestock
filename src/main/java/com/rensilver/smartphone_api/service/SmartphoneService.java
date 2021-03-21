@@ -66,7 +66,7 @@ public class SmartphoneService {
                 .orElseThrow(() -> new SmartphoneNotFoundException(id));
     }
 
-    private SmartphoneDTO increment(Long id, int quantityToIncrement) throws SmartphoneNotFoundException, SmartphoneStockExceededException {
+    public SmartphoneDTO increment(Long id, int quantityToIncrement) throws SmartphoneNotFoundException, SmartphoneStockExceededException {
         Smartphone smartphoneToIncrementStock = verifyIfExists(id);
         int quantityAfterIncrement = quantityToIncrement + smartphoneToIncrementStock.getQuantity();
         if (quantityAfterIncrement <= smartphoneToIncrementStock.getMax()) {
