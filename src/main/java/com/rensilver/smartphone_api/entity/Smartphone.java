@@ -2,10 +2,12 @@ package com.rensilver.smartphone_api.entity;
 
 import com.rensilver.smartphone_api.enums.SmartphoneMarketType;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
+@Data
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
