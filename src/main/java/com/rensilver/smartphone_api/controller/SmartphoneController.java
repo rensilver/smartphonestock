@@ -15,7 +15,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/smartphones")
+@RequestMapping("/smartphones")
 @AllArgsConstructor(onConstructor = @__(@Autowired))
 public class SmartphoneController {
 
