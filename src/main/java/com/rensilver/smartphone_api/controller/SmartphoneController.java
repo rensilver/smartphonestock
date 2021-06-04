@@ -21,25 +21,20 @@ public class SmartphoneController {
 
     private final SmartphoneService smartphoneService;
 
-    @GetMapping
-    public List<SmartphoneDTO> findAll(){
-        return smartphoneService.findAll();
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public SmartphoneDTO createSmartphone(@RequestBody @Valid SmartphoneDTO smartphoneDTO) throws SmartphoneAlreadyRegisteredException {
+        return smartphoneService.createSmartphone(smartphoneDTO);
     }
 
-    @GetMapping("/{id}")
-    public SmartphoneDTO findById(@PathVariable Long id) throws SmartphoneNotFoundException {
-        return smartphoneService.findById(id);
+    @GetMapping
+    public List<SmartphoneDTO> listSmartphones(){
+        return smartphoneService.findAll();
     }
 
     @GetMapping("/{name}")
     public SmartphoneDTO findByName(@PathVariable String name) throws SmartphoneNotFoundException {
         return smartphoneService.findByName(name);
-    }
-
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public SmartphoneDTO createSmartphone(@RequestBody @Valid SmartphoneDTO smartphoneDTO) throws SmartphoneAlreadyRegisteredException {
-        return smartphoneService.createSmartphone(smartphoneDTO);
     }
 
     @DeleteMapping("/{id}")

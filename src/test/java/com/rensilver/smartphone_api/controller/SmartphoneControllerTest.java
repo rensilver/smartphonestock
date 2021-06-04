@@ -1,7 +1,9 @@
 package com.rensilver.smartphone_api.controller;
 
 import com.rensilver.smartphone_api.builder.SmartphoneDTOBuilder;
+import com.rensilver.smartphone_api.dto.QuantityDTO;
 import com.rensilver.smartphone_api.dto.SmartphoneDTO;
+import com.rensilver.smartphone_api.exception.SmartphoneNotFoundException;
 import com.rensilver.smartphone_api.service.SmartphoneService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,12 +14,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
+import java.util.Collections;
+
 import static com.rensilver.smartphone_api.utils.JsonConvertionUtils.asJsonString;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -78,5 +83,118 @@ public class SmartphoneControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(asJsonString(smartphoneDTO)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void whenGETIsCalledWithValidNameThenOkStatusIsReturned() throws Exception {
+        // given
+        SmartphoneDTO smartphoneDTO = SmartphoneDTOBuilder.builder().build().toSmartphoneDTO();
+
+        //when
+        when(smartphoneService.findByName(smartphoneDTO.getName())).thenReturn(smartphoneDTO);
+
+        // then
+        mockMvc.perform(MockMvcRequestBuilders.get(SMARTPHONE_API_URL_PATH + "/" + smartphoneDTO.getName())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is(smartphoneDTO.getName())))
+                .andExpect(jsonPath("$.ram", is(smartphoneDTO.getRam())))
+                .andExpect(jsonPath("$.camQuality", is(smartphoneDTO.getCamQuality())))
+                .andExpect(jsonPath("$.brand", is(smartphoneDTO.getBrand())))
+                .andExpect(jsonPath("$.type", is(smartphoneDTO.getType().toString())));
+    }
+
+    @Test
+    void whenGETIsCalledWithoutRegisteredNameThenNotFoundStatusIsReturned() throws Exception {
+        // given
+        SmartphoneDTO smartphoneDTO = SmartphoneDTOBuilder.builder().build().toSmartphoneDTO();
+
+        //when
+        when(smartphoneService.findByName(smartphoneDTO.getName())).thenThrow(SmartphoneNotFoundException.class);
+
+        //then
+        mockMvc.perform(MockMvcRequestBuilders.get(SMARTPHONE_API_URL_PATH + "/" + smartphoneDTO.getName())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void whenGETListWithSmartphoneIsCalledThenOkStatusIsReturned() throws Exception {
+        //given
+        SmartphoneDTO smartphoneDTO = SmartphoneDTOBuilder.builder().build().toSmartphoneDTO();
+
+        //when
+        when(smartphoneService.findAll()).thenReturn(Collections.singletonList(smartphoneDTO));
+
+        //then
+        mockMvc.perform(MockMvcRequestBuilders.get(SMARTPHONE_API_URL_PATH)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name", is(smartphoneDTO.getName())))
+                .andExpect(jsonPath("$[0].ram", is(smartphoneDTO.getRam())))
+                .andExpect(jsonPath("$[0].camQuality", is(smartphoneDTO.getCamQuality())))
+                .andExpect(jsonPath("$[0].brand", is(smartphoneDTO.getBrand())))
+                .andExpect(jsonPath("$[0].type", is(smartphoneDTO.getType().toString())));
+    }
+
+    @Test
+    void whenGETListWithoutSmartphonesIsCalledThenOkStatusIsReturned() throws Exception {
+        //given
+        SmartphoneDTO smartphoneDTO = SmartphoneDTOBuilder.builder().build().toSmartphoneDTO();
+
+        //when
+        when(smartphoneService.findAll()).thenReturn(Collections.singletonList(smartphoneDTO));
+
+        //then
+        mockMvc.perform(MockMvcRequestBuilders.get(SMARTPHONE_API_URL_PATH)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void whenDELETEIsCalledWithValidIdThenNoContentStatusIsReturned() throws Exception {
+        //given
+        SmartphoneDTO smartphoneDTO = SmartphoneDTOBuilder.builder().build().toSmartphoneDTO();
+
+        //when
+        doNothing().when(smartphoneService).deleteById(smartphoneDTO.getId());
+
+        //then
+        mockMvc.perform(MockMvcRequestBuilders.get(SMARTPHONE_API_URL_PATH + "/" + smartphoneDTO.getId())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void whenDELETEIsCalledWithInvalidIdThenNotFoundStatusIsReturned() throws Exception {
+        //given
+        doThrow(SmartphoneNotFoundException.class).when(smartphoneService).deleteById(INVALID_SMARTPHONE_ID);
+
+        //then
+        mockMvc.perform(MockMvcRequestBuilders.get(SMARTPHONE_API_URL_PATH + "/" + INVALID_SMARTPHONE_ID)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void whenPATCHIsCalledToIncrementDiscountThenOKstatusIsReturned() throws Exception {
+        QuantityDTO quantityDTO = QuantityDTO.builder()
+                .quantity(10)
+                .build();
+
+        SmartphoneDTO smartphoneDTO = SmartphoneDTOBuilder.builder().build().toSmartphoneDTO();
+        smartphoneDTO.setQuantity(smartphoneDTO.getQuantity() + quantityDTO.getQuantity());
+
+        when(smartphoneService.increment(VALID_SMARTPHONE_ID, quantityDTO.getQuantity())).thenReturn(smartphoneDTO);
+
+        mockMvc.perform(MockMvcRequestBuilders.patch(SMARTPHONE_API_URL_PATH + "/" + VALID_SMARTPHONE_ID + SMARTPHONE_API_SUBPATH_INCREMENT_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(asJsonString(quantityDTO))).andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is(smartphoneDTO.getName())))
+                .andExpect(jsonPath("$.ram", is(smartphoneDTO.getRam())))
+                .andExpect(jsonPath("$.camQuality", is(smartphoneDTO.getCamQuality())))
+                .andExpect(jsonPath("$.brand", is(smartphoneDTO.getBrand())))
+                .andExpect(jsonPath("$.type", is(smartphoneDTO.getType().toString())))
+                .andExpect(jsonPath("$.quantity", is(smartphoneDTO.getQuantity())));
     }
 }

@@ -23,6 +23,13 @@ public class SmartphoneService {
 
     private final SmartphoneMapper smartphoneMapper = SmartphoneMapper.INSTANCE;
 
+    public SmartphoneDTO createSmartphone(SmartphoneDTO smartphoneDTO) throws SmartphoneAlreadyRegisteredException {
+        verifyIfIsAlreadyRegistered(smartphoneDTO.getName());
+        Smartphone smartphone = smartphoneMapper.toModel(smartphoneDTO);
+        Smartphone savedSmartphone = smartphoneRepository.save(smartphone);
+        return smartphoneMapper.toDTO(savedSmartphone);
+    }
+
     public List<SmartphoneDTO> findAll() {
         return smartphoneRepository.findAll()
                 .stream()
@@ -30,23 +37,10 @@ public class SmartphoneService {
                 .collect(Collectors.toList());
     }
 
-    public SmartphoneDTO findById(Long id) throws SmartphoneNotFoundException {
-        Smartphone foundSmartphone = smartphoneRepository.findById(id)
-                .orElseThrow(() -> new SmartphoneNotFoundException(id));
-        return smartphoneMapper.toDTO(foundSmartphone);
-    }
-
     public SmartphoneDTO findByName(String name) throws SmartphoneNotFoundException {
         Smartphone foundSmartphone = smartphoneRepository.findByName(name)
                 .orElseThrow(() -> new SmartphoneNotFoundException(name));
         return smartphoneMapper.toDTO(foundSmartphone);
-    }
-
-    public SmartphoneDTO createSmartphone(SmartphoneDTO smartphoneDTO) throws SmartphoneAlreadyRegisteredException {
-        verifyIfIsAlreadyRegistered(smartphoneDTO.getName());
-        Smartphone smartphone = smartphoneMapper.toModel(smartphoneDTO);
-        Smartphone savedSmartphone = smartphoneRepository.save(smartphone);
-        return smartphoneMapper.toDTO(savedSmartphone);
     }
 
     public void deleteById(Long id) throws SmartphoneNotFoundException {
